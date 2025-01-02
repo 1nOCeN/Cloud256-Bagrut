@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud256</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='MainC.css') }}">
+    <script src="Mainjs.js"> </script>
+</head>
+   
+<body>
+
+    <div class="navbar">
+        
+        <div class="logo">
+            <a href="https://1nocen.github.io/Cloud256/"><img src="logotosite.webp" alt="Logo"></a>
+        </div>  
+
+        <div class="dots">
+            <button onclick="toggleBox()">&#8942;</button>
+            <div class="box2" id="box2">
+                <a href="#">Support &#8599;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="Video">
+        <video autoplay loop muted playsinline preload="auto">
+            <source src="cloud.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="Header">
+        <p>Join a place where all your Files, Photos,<br> PDF Files will be <p2>safe.</p2></p>
+    </div>
+
+    <div class="descprition">
+        <p>Cloud256</p>
+    </div>
+
+    <div class="SignIn">
+        <button><a href="{{ url_for('login') }}">Sign in</a></button>
+    </div>
+
+    <div class="Con">
+        
+        <div class="container1">
+            <div class="con1 img">
+            
+                <img src="cloud-removebg-preview.png">
+            </div>
+            
+            <div class="box">
+                <h>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptas ut eaque ratione at obcaecati voluptatem dignissimos.</h>
+                <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Error nam unde at eligendi? Laboriosam quo commodi enim temporibus optio a, veritatis cumque voluptatum hic pariatur illum modi iure molestias. Blanditiis?  <p></div>
+        </div>
+
+        <div class="container2">
+            <div class="con2 img">
+            
+                <img src="filesss.png">
+        </div>
+        <div class="box">
+            <h>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptas ut eaque ratione at obcaecati voluptatem dignissimos.</h>
+            <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Error nam unde at eligendi? Laboriosam quo commodi enim temporibus optio a, veritatis cumque voluptatum hic pariatur illum modi iure molestias. Blanditiis?  <p></div>
+        </div>
+    </div>
+
+    <div class="end">
+        <a href="#">Terms & Conditions | </a> <a href="#"> Policy | </a> 
+            <p2>Copyright © 2024 Inocen, All rights reserved.</p></p>
+    </div>
+
+    
+    
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+    "workbench.activityBar.iconClickBehavior": "toggle",
+    "workbench.colorCustomizations": {},
+    "github.branchProtection": true,
+    "git.enableStatusBarSync": true,
+    "git.requireGitUserConfig": false
+}

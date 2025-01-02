@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud256 - My Files</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Mainprog.css') }}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/logotosite.webp') }}" alt="Logo"></a>
+        </div>
+        <div class="user">
+            <div class="add">
+                <a href="/"><img src="{{ url_for('static', filename='cloud-arrow-up.svg') }}" alt="Upload"></a>
+                <a href="user.html"><img src="{{ url_for('static', filename='logotosite.webp') }}" alt="User"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>My Files</h1>
+        <p>Below is a list of your uploaded files:</p>
+
+        {% if files %}
+        <ul>
+            {% for file in files %}
+            <li>
+                <a href="{{ url_for('serve_file', filename=file) }}" target="_blank">{{ file }}</a>
+                |
+                <a href="{{ url_for('download_file', filename=file) }}">Download</a>
+                |
+                <form action="{{ url_for('delete_file', filename=file) }}" method="POST" style="display:inline;">
+                    <button type="submit" style="color: red; background: none; border: none; cursor: pointer;">Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No files have been uploaded yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="end">
+        <a href="#">Terms & Conditions</a> | 
+        <a href="#">Policy</a>
+        <p>Copyright © 2024 Inocen, All rights reserved.</p>
+    </div>
+</body>
+</html>
