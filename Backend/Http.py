@@ -18,12 +18,10 @@ ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Home route to display the main program
+# Home route to display the upload page by default
 @app.route("/")
-def main_program():
-    # List files in the upload folder
-    files = os.listdir(app.config["UPLOAD_FOLDER"])
-    return render_template("Mainprogram.html", files=files)  # Render template from 'templates' folder
+def upload_page():
+    return render_template("Upload.html")
 
 # Upload route
 @app.route("/upload", methods=["POST"])
@@ -36,7 +34,7 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = file.filename
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        return redirect(url_for("main_program"))
+        return "File uploaded successfully!"
     else:
         return "File not allowed", 400
 
@@ -56,10 +54,10 @@ def delete_file(filename):
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     if os.path.exists(file_path):
         os.remove(file_path)
-        return redirect(url_for("Mainprogram.html"))
+        return "File deleted successfully!"
     else:
         return "File not found", 404
 
 if __name__ == "__main__":
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-    app.run(host="192.168.10.14", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

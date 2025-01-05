@@ -5,20 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='signUp.css') }}">
-  <script src="Mainjs.js"></script>
+  <script src="{{ url_for('static', filename='Mainjs.js') }}"></script>
 </head>
 <body>
   <!-- Background Video -->
   <div class="video-container">
     <video autoplay muted loop id="background-video">
-      <source src="{{ url_for('backend/static', filename='0_Clouds_Sky_1920x1080.mp4') }}" type="video/mp4">
+      <source src="{{ url_for('static', filename='0_Clouds_Sky_1920x1080.mp4') }}" type="video/mp4">
     </video>
   </div>
 
   <!-- Navbar -->
   <div class="navbar">
     <div class="logo">
-      <a href="index.html"><img src="logotosite.webp" alt="Logo"></a>
+      <a href="{{ url_for('main_program') }}"><img src="{{ url_for('static', filename='logotosite.webp') }}" alt="Logo"></a>
     </div>
     <div class="dots">
       <button onclick="toggleBox()">&#8942;</button>
@@ -30,12 +30,12 @@
 
   <!-- Signup Form -->
   <div class="login-form">
-    <img height="500px" width="300px" src="night_city_with_blue_clouds_ne.jpeg">
+    <img height="500px" width="300px" src="{{ url_for('static', filename='night_city_with_blue_clouds_ne.jpeg') }}">
 
-    <form action="Tablefill.php" method="POST">
+    <form action="{{ url_for('reg.py') }}" method="POST">
       <h1>Cloud256</h1>
       <div>
-        <input type="email" id="email" name="Email" placeholder="Enter your email" required></input>
+        <input type="email" id="email" name="Email" placeholder="Enter your email" required>
       </div>
       <div>
         <input type="text" id="username" name="Username" placeholder="Enter your username" required>
@@ -46,9 +46,8 @@
       <div>
         <input type="submit" name="submit" value="SignUp">
       </div>
-      <p>Have an account? <a href="Login.html">Login</a></p>
+      <p>Have an account? <a href="{{ url_for('login') }}">Login</a></p>
     </form>
   </div>
-  
 </body>
 </html>
