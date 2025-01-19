@@ -79,12 +79,6 @@
       opacity: 1;
     }
 
-    /* Animated Text */
-    .animated-text {
-      font-size: 2em;
-      font-weight: bold;
-      animation: fadeOut 3s ease-in-out forwards;
-    }
 
     @keyframes fadeOut {
       0% {

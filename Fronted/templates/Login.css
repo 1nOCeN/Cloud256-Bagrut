@@ -88,15 +88,6 @@ body {
       color: #fff;
       overflow: hidden;
     }
-
-    /* Text Animation */
-    .animated-text {
-      font-size: 2em;
-      font-weight: bold;
-      opacity: 1;
-      animation: fadeOut 3s ease-in-out forwards;
-    }
-
     @keyframes fadeOut {
       0% {
         opacity: 1;
@@ -106,10 +97,7 @@ body {
         transform: scale(1.2);
       }
     }
-
-    /* Login Form (Initially Hidden) */
     .login-form {
-      display: none;
       width: 900px;
       height: 500px;
       align-items: center;

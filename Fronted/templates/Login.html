@@ -1,47 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='Login.css') }}">
-  <script src="Mainjs.js"> </script>
-</head>
-<body>
-  <!-- Text Animation -->
-  <div class="animated-text" id="animated-text">
-    Welcome to Cloud256
-  </div>
-
-  <div class="video-container">
-    <video autoplay muted loop id="background-video">
-      <source src="{{ url_for('static', filename='images/0_Clouds_Sky_1920x1080.mp4') }}" type="video/mp4" autoplay >    
-    </video>
-  </div>
-
-  <div class="navbar">
-    <div class="logo">
-      <a href="index.html"><img src="logotosite.webp" alt="Logo"></a>
-    </div>
-
-    <div class="dots">
-      <button onclick="toggleBox()">&#8942;</button>
-      <div class="box2" id="box2">
-        <a href="#">Support &#8599;</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Login Form -->
-  <div class="login-form" id="login-form">
-    <img height="500px" width="300px" src="{{ url_for('static', filename='images/night_city_with_blue_clouds_ne.jpeg') }}" alt="City Image">
-    <form action="signcheck.php" method="POST">
-        <h1 style="color: black">SafeCloud</h1>
-        <input type="email" id="email" name="Email" placeholder="Email" required>
-        <input type="password" name="Password" placeholder="Password" required>
-        <input type="submit" name="Login" value="Login">
-        <i>Don't have an account? <a href="signup.html">Signup</a></i>
-    </form>
-</div>
-</body>
-</html>
+<form action="{{ url_for('login') }}" method="POST">
+    <h1 style="color: black">SafeCloud</h1>
+    <input type="email" id="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <input type="submit" name="login" value="Login">
+    <i>Don't have an account? <a href="{{ url_for('register') }}">Signup</a></i>
+</form>
