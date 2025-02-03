@@ -1,102 +1,89 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import check_password_hash
+from werkzeug.utils import secure_filename
+from db import get_user_by_email, add_user, get_user_by_username  # Import the DB functions
 import os
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_user_by_email, add_user  # Import functions from db.py
+
 
 template_folder = r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\templates"
-
 app = Flask(__name__, template_folder=template_folder)
 
-app.secret_key = "your_secret_key"  # Required for session handling
+app.secret_key = "your_secret_key"
 
 # Base folder for user files
-BASE_UPLOAD_FOLDER = r"\\DESKTOP-1EOTSNC\Cloud256-Database2"
+BASE_UPLOAD_FOLDER = "user_files"  # Local folder for storing user uploads
+os.makedirs(BASE_UPLOAD_FOLDER, exist_ok=True)  # Ensure the base folder exists
 app.config["BASE_UPLOAD_FOLDER"] = BASE_UPLOAD_FOLDER
 
-# Allowed file extensions
+# Allowed file extensions for upload
 ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
 
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# Route: Home (redirect to login)
 @app.route("/")
 def home():
     return redirect(url_for("login"))
 
 
-# Database connection helper
-def get_db_connection():
-    conn = sqlite3.connect("users.db")
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-# Ensure user folder exists
-def get_user_folder(username):
-    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
-    os.makedirs(user_folder, exist_ok=True)
-    return user_folder
-
-
-# Check if file is allowed
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# Route: Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-        # Get user from the database by email
         user = get_user_by_email(email)
+        if not user:
+            return "User not found.", 404
 
-        hashed_password = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
-        print("Generated Hash:", hashed_password)
-
-        # Check the hash
-        is_valid = check_password_hash(hashed_password, password)
-        print("Password valid:", is_valid)
+        if check_password_hash(user["password"], password):
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            print(f"Login successful for {email}")
+            return redirect(url_for("main_program"))
+        else:
+            return "Invalid credentials, please try again.", 401
 
     return render_template("Login.html")
 
 
-
-
-
-
-# Route: Register Page
+# Route: Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        email = request.form["email"]
-        username = request.form["username"]
-        password = request.form["password"]
-        hashed_password = generate_password_hash(password)  # Secure password
+        email = request.form.get("email")
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        # Add the new user to the database
-        add_user(email, username, hashed_password)
+        # Validate input
+        if not email or not username or not password:
+            return "All fields are required.", 400
 
-        return redirect(url_for("login"))
+        if get_user_by_email(email) or get_user_by_username(username):
+            return "Email or username already exists.", 400
+
+        if add_user(email, username, password):
+            return redirect(url_for("login"))
+        else:
+            return "Error registering user. Please try again.", 500
 
     return render_template("signup.html")
 
 
-# Route: Main Program (File Listing)
+# Route: Main Program (File Management)
 @app.route("/mainprogram")
 def main_program():
     if "user_id" in session:
-        # Fetch the username based on user_id from the database
-        user_id = session["user_id"]
-        conn = get_db_connection()
-        user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
-        conn.close()
+        username = session["username"]
+        user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
+        os.makedirs(user_folder, exist_ok=True)  # Ensure user folder exists
 
-        if user:
-            username = user["username"]
-            user_folder = get_user_folder(username)
-            files = os.listdir(user_folder)
-            return render_template("Mainprogram.html", files=files)
-        else:
-            return "User not found.", 404
+        files = os.listdir(user_folder)
+        return render_template("Mainprogram.html", files=files, username=username)
 
     return redirect(url_for("login"))
 
@@ -107,26 +94,18 @@ def upload_file():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    user_id = session["user_id"]
-    # Fetch the username based on user_id from the database
-    conn = get_db_connection()
-    user = conn.execute("SELECT username FROM users WHERE id = ?", (user_id,)).fetchone()
-    conn.close()
+    username = session["username"]
+    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
+    os.makedirs(user_folder, exist_ok=True)
 
-    if user:
-        username = user["username"]
-        user_folder = get_user_folder(username)
+    file = request.files.get("file")
+    if not file or file.filename == "":
+        return "No file selected for uploading", 400
 
-        if "file" not in request.files:
-            return "No file part in the request", 400
-        file = request.files["file"]
-
-        if file.filename == "":
-            return "No file selected for uploading", 400
-        if file and allowed_file(file.filename):
-            filename = file.filename
-            file.save(os.path.join(user_folder, filename))
-            return redirect(url_for("main_program"))
+    if allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(user_folder, filename))
+        return redirect(url_for("main_program"))
 
     return "File not allowed", 400
 
@@ -134,10 +113,9 @@ def upload_file():
 # Route: Logout
 @app.route("/logout")
 def logout():
-    session.pop("user_id", None)
+    session.clear()
     return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
-    os.makedirs(app.config["BASE_UPLOAD_FOLDER"], exist_ok=True)
     app.run(host="0.0.0.0", port=5000, debug=True)

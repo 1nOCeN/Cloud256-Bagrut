@@ -1,84 +1,113 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session
-import os
-import uuid
+from flask import Flask, request, redirect, url_for, render_template
+from werkzeug.security import generate_password_hash, check_password_hash
+import mysql.connector
+from mysql.connector import Error
 
-# Absolute path to your 'templates' directory
+# Define the Flask app and templates folder
 template_folder = r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\templates"
-
-# Create Flask app and specify the custom templates folder
 app = Flask(__name__, template_folder=template_folder)
-app.secret_key = "your_secret_key"  # Needed for Flask sessions
 
-# Set the base upload folder
-BASE_UPLOAD_FOLDER = r"\\DESKTOP-1EOTSNC\Cloud256-Database2"
-app.config["BASE_UPLOAD_FOLDER"] = BASE_UPLOAD_FOLDER
+@app.route("/")
+def home():
+    return redirect(url_for("login"))
+# Function to get a database connection
+def get_db_connection():
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="cloud",  # Replace with your MySQL user
+            password="rootme1",  # Replace with your MySQL password
+            database="cloud"  # Replace with your actual database name
+        )
+        if connection.is_connected():
+            return connection
+    except Error as e:
+        print(f"Error connecting to MySQL: {e}")
+        return None
 
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif"}
+# Function to get a user by email from the database
+def get_user_by_email(email):
+    connection = get_db_connection()
+    if not connection:
+        return None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        return user
+    finally:
+        cursor.close()
+        connection.close()
 
-# Check if a file is allowed
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+# Function to add a new user to the database
+def add_user(email, hashed_password):
+    connection = get_db_connection()
+    if not connection:
+        return False
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "INSERT INTO users (email, password) VALUES (%s, %s)",
+            (email, hashed_password),
+        )
+        connection.commit()
+        return True
+    except Error as e:
+        print(f"Error adding user: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
 
-# Ensure the user's folder exists
-def get_user_folder():
-    user_id = session.get("user_id")
-    if not user_id:
-        user_id = str(uuid.uuid4())  # Generate a unique ID for the user
-        session["user_id"] = user_id
-    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], user_id)
-    os.makedirs(user_folder, exist_ok=True)
-    return user_folder
-
-# Home route to display the upload form
-@app.route("/", methods=["GET", "POST"])
-def upload_page():
-    user_folder = get_user_folder()  # Ensure the user's folder exists
+# Login route
+@app.route("/login", methods=["GET", "POST"])
+def login():
     if request.method == "POST":
-        # Handle file upload
-        if "file" not in request.files:
-            return "No file part in the request", 400
-        file = request.files["file"]
-        if file.filename == "":
-            return "No file selected for uploading", 400
-        if file and allowed_file(file.filename):
-            filename = file.filename
-            file.save(os.path.join(user_folder, filename))
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # Get user from the database
+        user = get_user_by_email(email)
+        if not user:
+            return "User not found.", 404
+
+        # Validate the password
+        stored_hash = user["password"]
+        if check_password_hash(stored_hash, password):
+            print(f"Login successful for {email}")
             return redirect(url_for("main_program"))
         else:
-            return "File not allowed", 400
-    return render_template("upload.html")
+            print(f"Password mismatch for {email}")
+            return "Invalid credentials, please try again.", 401
 
-# Main program route to list user-specific files
-@app.route("/mainprogram")
+    return render_template("Login.html")
+
+# Main program route
+@app.route("/main")
 def main_program():
-    user_folder = get_user_folder()
-    files = os.listdir(user_folder)
-    return render_template("Mainprogram.html", files=files)
+    return "Welcome to the main program!"
 
-# Route to serve files for the current user
-@app.route("/serve/<filename>")
-def serve_file(filename):
-    user_folder = get_user_folder()
-    return send_from_directory(user_folder, filename)
+# Register route
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-# Route to download a file for the current user
-@app.route("/download/<filename>")
-def download_file(filename):
-    user_folder = get_user_folder()
-    return send_from_directory(user_folder, filename, as_attachment=True)
+        # Check if user already exists
+        if get_user_by_email(email):
+            return "User already exists.", 400
 
-# Route to delete a file for the current user
-@app.route("/delete/<filename>", methods=["POST"])
-def delete_file(filename):
-    user_folder = get_user_folder()
-    file_path = os.path.join(user_folder, filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        return redirect(url_for("main_program"))
-    else:
-        return "File not found", 404
+        # Hash the password and add the user to the database
+        hashed_password = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
+        if add_user(email, hashed_password):
+            print(f"New user registered: {email}")
+            return redirect(url_for("login"))
+        else:
+            return "Error registering user. Please try again.", 500
 
+    return render_template("signup.html")
+
+# Run the app
 if __name__ == "__main__":
-    os.makedirs(app.config["BASE_UPLOAD_FOLDER"], exist_ok=True)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
