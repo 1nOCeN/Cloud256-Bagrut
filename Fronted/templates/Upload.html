@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud256 - Upload File</title>
+    <title>Upload File</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='Mainprog.css') }}">
 </head>
 <body>
     <h2>Upload a File</h2>
-    <form action="{{ url_for('upload_page') }}" method="POST" enctype="multipart/form-data">
-        <!-- File input field -->
-        <label for="file">Choose a file:</label>
-        <input type="file" name="file" id="file" required>
-        <br><br>
-        <!-- Upload button -->
-        <button type="submit">Upload</button>
-    </form>
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput">
+    <button type="submit">Upload</button>
+</form>
+    <br>
+    <a href="{{ url_for('main_program') }}">Back to File Manager</a>
 </body>
 </html>
