@@ -1,14 +1,11 @@
-import websocket
-import json
+@app.route("/request_access", methods=["GET", "POST"])
+def request_file_access():
+    if request.method == "POST":
+        filename = request.form.get("filename")
+        username = session.get("username", "Guest")
 
-def on_message(ws, message):
-    data = json.loads(message)
-    if "progress" in data:
-        print(f"Upload Progress: {data['progress']}%")
-    if "filename" in data:
-        print(f"Upload Complete: {data['filename']}")
+        file_access_requests.append({"user": username, "filename": filename})
 
-ws = websocket.WebSocketApp("ws://127.0.0.1:5000/socket.io/?EIO=4&transport=websocket",
-                             on_message=on_message)
+        return f"Access request sent for {filename}"
 
-ws.run_forever()
+    return render_template("request_access.html")

@@ -1,21 +1,215 @@
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud256</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='MainC.css') }}">
-    <script src="Mainjs.js"> </script>
+    <script src="Mainjs.js"></script>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --secondary-color: #2C3E50;
+            --text-color: #333;
+            --background-color: #f8f9fa;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo img {
+            height: 40px;
+            transition: transform 0.3s ease;
+        }
+
+        .logo img:hover {
+            transform: scale(1.05);
+        }
+
+        .dots button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .dots button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .box2 {
+            display: none;
+            position: absolute;
+            right: 20px;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .box2 a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .Video {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .Video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7);
+        }
+
+        .Header {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 2;
+        }
+
+        .Header p {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .Header p2 {
+            color: var(--primary-color);
+        }
+
+        .SignIn {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .SignIn button {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .SignIn button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .SignIn a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .Con {
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        .container1, .container2 {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .container2 {
+            flex-direction: row-reverse;
+        }
+
+        .img img {
+            max-width: 300px;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .box {
+            flex: 1;
+        }
+
+        .box h {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .end {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .end a {
+            color: white;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .Header p {
+                font-size: 1.8rem;
+            }
+
+            .container1, .container2 {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .img img {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
-   
 <body>
-
     <div class="navbar">
-        
         <div class="logo">
-            <a href="https://1nocen.github.io/Cloud256/"><img src="logotosite.webp" alt="Logo"></a>
+            <a href="https://1nocen.github.io/Cloud256/"><img src="logotosite.webp" alt="Cloud256 Logo"></a>
         </div>  
-
         <div class="dots">
             <button onclick="toggleBox()">&#8942;</button>
             <div class="box2" id="box2">
@@ -31,7 +225,7 @@
     </div>
 
     <div class="Header">
-        <p>Join a place where all your Files, Photos,<br> PDF Files will be <p2>safe.</p2></p>
+        <p>הצטרף למקום בו כל הקבצים, התמונות<br> וקבצי ה-PDF שלך יהיו <p2>בטוחים.</p2></p>
     </div>
 
     <div class="descprition">
@@ -39,39 +233,34 @@
     </div>
 
     <div class="SignIn">
-        <button><a href="{{ url_for('login') }}">Sign in</a></button>
+        <button><a href="{{ url_for('login') }}">התחבר</a></button>
     </div>
 
     <div class="Con">
-        
         <div class="container1">
             <div class="con1 img">
-            
-                <img src="cloud-removebg-preview.png">
+                <img src="cloud-removebg-preview.png" alt="Cloud Storage">
             </div>
-            
             <div class="box">
-                <h>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptas ut eaque ratione at obcaecati voluptatem dignissimos.</h>
-                <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Error nam unde at eligendi? Laboriosam quo commodi enim temporibus optio a, veritatis cumque voluptatum hic pariatur illum modi iure molestias. Blanditiis?  <p></div>
+                <h>אחסון מאובטח בענן</h>
+                <p>שמור את הקבצים החשובים שלך בצורה מאובטחת בענן. עם Cloud256, תוכל לגשת לקבצים שלך מכל מקום, בכל זמן, עם אבטחה מתקדמת ושמירה על פרטיותך.</p>
+            </div>
         </div>
 
         <div class="container2">
             <div class="con2 img">
-            
-                <img src="filesss.png">
-        </div>
-        <div class="box">
-            <h>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptas ut eaque ratione at obcaecati voluptatem dignissimos.</h>
-            <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Error nam unde at eligendi? Laboriosam quo commodi enim temporibus optio a, veritatis cumque voluptatum hic pariatur illum modi iure molestias. Blanditiis?  <p></div>
+                <img src="filesss.png" alt="File Management">
+            </div>
+            <div class="box">
+                <h>ניהול קבצים חכם</h>
+                <p>נהל את כל הקבצים שלך בקלות עם ממשק משתמש ידידותי. ארגן, שתף ושמור על הקבצים החשובים שלך בצורה חכמה ויעילה.</p>
+            </div>
         </div>
     </div>
 
     <div class="end">
-        <a href="#">Terms & Conditions | </a> <a href="#"> Policy | </a> 
-            <p2>Copyright © 2024 Inocen, All rights reserved.</p></p>
+        <a href="#">תנאים והגבלות</a> | <a href="#">מדיניות פרטיות</a> | 
+        <p2>כל הזכויות שמורות © 2024 Inocen</p2>
     </div>
-
-    
-    
 </body>
 </html>

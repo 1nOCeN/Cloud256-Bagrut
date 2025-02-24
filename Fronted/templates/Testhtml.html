@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Program</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+</head>
+<body>
+    <h1>Welcome, {{ session["username"] }}!</h1>
+
+    <h3>Uploaded Files:</h3>
+    <ul>
+        {% for file in files %}
+            <li>{{ file }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Request Access Form -->
+    <h3>Request File Access:</h3>
+    <form action="/request_access" method="post">
+        <label for="user">Select User:</label>
+        <select id="user" name="user" required>
+            <option value="">-- Select User --</option>
+            {% for user in users %}
+                <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="filename">Select File:</label>
+        <select id="filename" name="filename" required>
+            <option value="">-- Select File --</option>
+            {% for file in files %}
+                <option value="{{ file }}">{{ file }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Send Request</button>
+    </form>
+
+    <h3>Real-Time Notifications</h3>
+    <ul id="notifications"></ul>
+
+    <script>
+        var socket = io.connect("http://localhost:5000");
+
+        // Listen for real-time file access requests
+        socket.on('file_request', function(data) {
+            var notification = document.createElement("li");
+            notification.textContent = data.from + " requested " + data.filename + " from you.";
+            document.getElementById("notifications").appendChild(notification);
+        });
+    </script>
+
+</body>
+</html>
