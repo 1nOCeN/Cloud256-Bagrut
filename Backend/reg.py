@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -60,27 +60,39 @@ def signup():
 
     return render_template("signup.html")
 
-# Route for the login page
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form['Email']
-        password = request.form['Password']
+        email = request.form.get('Email')  # Using get() is safer
+        password = request.form.get('Password')
+
+        if not email or not password:
+            flash("Please enter both email and password", "danger")
+            return redirect(url_for('login'))
 
         # Connect to the SQLite database and check credentials
-        conn = sqlite3.connect('users.db')
-        cursor = conn.cursor()
+        try:
+            conn = sqlite3.connect('users.db')
+            cursor = conn.cursor()
 
-        # Fetch user from the database
-        cursor.execute("SELECT * FROM users WHERE email=?", (email,))
-        user = cursor.fetchone()
+            # Fetch user from the database
+            cursor.execute("SELECT * FROM users WHERE email=?", (email,))
+            user = cursor.fetchone()
+            conn.close()
 
-        if user and check_password_hash(user[2], password):  # Check hashed password
-            flash("Login successful!", "success")
-            return redirect(url_for('main_program'))  # Redirect to main program after successful login
-        else:
-            flash("Invalid credentials. Please try again.", "danger")
-            return redirect(url_for('login'))
+            if user and check_password_hash(user[2], password):
+                # Set up session for the logged-in user
+                session['logged_in'] = True
+                session['user_email'] = email
+                session['username'] = user[1]  # Store username
+
+                flash("Login successful!", "success")
+                return redirect(url_for('main_program'))
+            else:
+                flash("Invalid credentials. Please try again.", "danger")
+        except Exception as e:
+            flash(f"Database error: {str(e)}", "danger")
 
     return render_template("Login.html")
 

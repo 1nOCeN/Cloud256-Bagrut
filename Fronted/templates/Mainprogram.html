@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud256 - My Files</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='Mainprog.css') }}">
-    <script src="Request.js"> </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -18,26 +18,13 @@
                     <img src="{{ url_for('static', filename='cloud-arrow-up.svg') }}" alt="Upload">
                 </a>
                 <a href="{{ url_for('logout') }}" alt="Logout">
-                    <img src="{{ url_for('static', filename='logout-icon.svg') }}">
+                    Logout
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Modal for file access request -->
-<div id="requestModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2>New File Access Request</h2>
-        <p id="requestDetails"></p>
-        <button onclick="approveRequest()">Approve</button>
-        <button onclick="denyRequest()">Deny</button>
-    </div>
-</div>
-
-    
-
-    <div class="container">
+     <div class="container">
         <h1>My Files</h1>
         <p>Below is a list of your uploaded files:</p>
 
@@ -56,35 +43,17 @@
             {% endfor %}
         </ul>
 
-        <h2>Request File Access</h2>
-<form method="POST">
-    <label for="user">Select User:</label>
-    <select name="user" id="user" required onchange="this.form.submit()">
-        <option value="">--Select User--</option>
-        {% for user in users %}
-            <option value="{{ user['username'] }}" {% if user['username'] == selected_user %}selected{% endif %}>
-                {{ user['username'] }}
-            </option>
-        {% endfor %}
-    </select>
-</form>
-
-{% if selected_user %}
-    <form action="{{ url_for('request_file_access') }}" method="POST">
-        <input type="hidden" name="user" value="{{ selected_user }}">
-
-        <label for="filename">Select File:</label>
-        <select name="filename" id="filename" required>
-            <option value="">--Select a file--</option>
-            {% for file in selected_user_files %}
-                <option value="{{ file }}">{{ file }}</option>
+        <h2>Start a Chat</h2>
+        <p>Select a user to start a chat:</p>
+        <ul>
+            {% for user in users %}
+                {% if user.username != session['username'] %}
+                    <li>
+                        <a href="{{ url_for('start_chat', username=user.username) }}">Chat with {{ user.username }}</a>
+                    </li>
+                {% endif %}
             {% endfor %}
-        </select>
-
-        <button type="submit">Request Access</button>
-    </form>
-{% endif %}
-
+        </ul>
     </div>
 
     <div class="end">
@@ -92,5 +61,23 @@
         <a href="#">Policy</a>
         <p>Copyright © 2024 Inocen, All rights reserved.</p>
     </div>
-</body>
-</html>
+
+    <script>
+        const socket = io.connect();
+
+        // Assuming session is available for current user
+        const currentUser = "{{ session['username'] }}";
+        const chatBox = document.getElementById('chat-box');
+
+        // Listen for incoming messages and display them
+        socket.on('receive_message', function(data) {
+            const messageElement = document.createElement('p');
+            messageElement.textContent = `${data.username}: ${data.message}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll to bottom
+        });
+
+        // Function to send a message to the server
+        function sendMessage(message) {
+            const room = "{{ room }}";
+    </script>

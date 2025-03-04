@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat with {{ username }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Chat with {{ username }}</h1>
+
+    <div id="chat-box" style="border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll;">
+        <!-- Messages will appear here -->
+    </div>
+
+    <input type="text" id="message-input" placeholder="Type your message here..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // Establish Socket.IO connection
+        const socket = io.connect();
+
+        const room = "{{ room }}";  // The room is passed from Flask to the template
+        const currentUser = "{{ session['username'] }}";  // Current logged-in user
+
+        // Check if connection is established successfully
+        socket.on('connect', () => {
+            console.log("Connected to Socket.IO server");
+        });
+
+        // Join the chat room
+        socket.emit('join', {'username': currentUser, 'room': room});
+
+        // Listen for incoming messages and display them in the chat box
+        socket.on('receive_message', function(data) {
+            console.log("Received message:", data);  // Debugging log
+            const chatBox = document.getElementById('chat-box');
+            const newMessage = document.createElement('p');
+            newMessage.textContent = `${data.username}: ${data.message}`;
+            chatBox.appendChild(newMessage);
+            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to the bottom
+        });
+
+        // Send a message to the server
+        function sendMessage() {
+            const message = document.getElementById('message-input').value;
+            if (message.trim() !== "") {
+                console.log("Sending message:", message);  // Debugging log
+                socket.emit('message', {'room': room, 'message': message, 'username': currentUser});
+                document.getElementById('message-input').value = '';  // Clear the input field
+            }
+        }
+
+        // Optionally, listen for Enter key press to send the message
+        document.getElementById('message-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();  // Trigger sendMessage when Enter is pressed
+            }
+        });
+    </script>
+</body>
+</html>

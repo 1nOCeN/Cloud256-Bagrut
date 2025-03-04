@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
-  <link rel="stylesheet" href="signUp.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='signUp.css') }}">
   <script src="{{ url_for('static', filename='Mainjs.js') }}"></script>
 </head>
 <body>
@@ -42,7 +42,7 @@
       </div>
       <div>
         <input type="password" id="password" name="password" placeholder="Enter your password" required>
-      </div>
+      </div>]
       <div>
         <input type="submit" name="submit" value="Sign Up">
       </div>

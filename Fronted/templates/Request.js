@@ -1,28 +1,42 @@
- // Connect to the SocketIO server
-    const socket = io.connect("http://localhost:5000");
+const socket = io();
 
-    // Listen for incoming file access requests
-    socket.on("file_request", function(data) {
-        // When a request is received, show the modal and populate it with details
-        document.getElementById("requestDetails").innerHTML = `User ${data.from} has requested access to the file: ${data.filename}`;
-        document.getElementById("requestModal").style.display = "block"; // Show the modal
-    });
+socket.on('connect', function() {
+    console.log('Connected to server');
+});
 
-    // Close the modal
-    function closeModal() {
-        document.getElementById("requestModal").style.display = "none";
-    }
+socket.on('file_request', function(data) {
+    console.log('Received file request:', data);
+    
+    // Update modal content
+    const requestDetails = document.getElementById('requestDetails');
+    requestDetails.textContent = `User ${data.from} has requested access to file: ${data.filename}`;
 
-    // Approve the request
-    function approveRequest() {
-        // Send the approval to the server
-        socket.emit('approve_request', { status: 'approved' });
-        closeModal(); // Close the modal
-    }
+    // Store request data for later use
+    requestDetails.dataset.requestId = data.requestId; 
 
-    // Deny the request
-    function denyRequest() {
-        // Send the denial to the server
-        socket.emit('approve_request', { status: 'denied' });
-        closeModal(); // Close the modal
-    }
+    // Show the modal
+    document.getElementById('requestModal').style.display = 'block';
+});
+
+// Function to close the modal
+function closeModal() {
+    document.getElementById('requestModal').style.display = 'none';
+}
+
+// Function to handle request approval
+function approveRequest() {
+    const requestId = document.getElementById('requestDetails').dataset.requestId;
+    socket.emit('approve_request', { requestId });
+
+    alert('Request approved.');
+    closeModal();
+}
+
+// Function to handle request denial
+function denyRequest() {
+    const requestId = document.getElementById('requestDetails').dataset.requestId;
+    socket.emit('deny_request', { requestId });
+
+    alert('Request denied.');
+    closeModal();
+}
