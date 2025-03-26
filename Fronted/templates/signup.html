@@ -1,53 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='signUp.css') }}">
-  <script src="{{ url_for('static', filename='Mainjs.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud256 - Sign Up</title>
+        <link rel="stylesheet" href="{{ url_for('serve_static', filename='signUp.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <!-- Background Video -->
-  <div class="video-container">
-    <video autoplay muted loop id="background-video">
-      <source src="{{ url_for('static', filename='0_Clouds_Sky_1920x1080.mp4') }}" type="video/mp4">
-    </video>
-  </div>
-
-  <!-- Navbar -->
-  <div class="navbar">
-    <div class="logo">
-      <a href="{{ url_for('main_program') }}"><img src="{{ url_for('static', filename='logotosite.webp') }}" alt="Logo"></a>
+    <div class="video-container">
+        <video autoplay muted loop id="background-video">
+            <source src="your-background-video.mp4" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
     </div>
-    <div class="dots">
-      <button onclick="toggleBox()">&#8942;</button>
-      <div class="box2" id="box2">
-        <a href="#">Support &#8599;</a>
-      </div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <img src="your-logo.png" alt="SafeCloud Logo">
+            <h1>Cloud256</h1>
+        </div>
+        <div class="menu-container">
+            <button id="menu-button" class="menu-button">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div id="dropdown-menu" class="dropdown-menu">
+                <a href="#"><i class="fas fa-headset"></i> Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="signup-container">
+        <div class="form-header">
+            <h1>Cloud256</h1>
+            <p>Secure cloud storage solution</p>
+        </div>
+
+        <form action="{{ url_for('register') }}" method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Choose a username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-with-icon">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+                    <i class="fas fa-eye password-toggle" id="password-toggle"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn-primary">Create Account</button>
+            </div>
+
+            <div class="divider">
+                <span class="divider-line"></span>
+                <span class="divider-text">or sign up with</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <div class="social-buttons">
+                <button type="button" class="social-btn">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button type="button" class="social-btn">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button type="button" class="social-btn">
+                    <i class="fab fa-apple"></i>
+                </button>
+            </div>
+
+            <div class="login-link">
+                Already have an account?
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+        </form>
+
+        <div class="terms">
+            <p>By creating an account, you agree to our</p>
+            <div>
+                <a href="#">Terms of Service</a> &amp;
+                <a href="#">Privacy Policy</a>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Signup Form -->
-  <div class="login-form">
-    <img height="500px" width="300px" src="NC.jpeg">
+    <script>
+        document.getElementById('menu-button').addEventListener('click', function() {
+            document.getElementById('dropdown-menu').classList.toggle('visible');
+        });
 
-    <form action="{{ url_for('register') }}" method="POST">
-      <h1>Cloud256</h1>
-      <div>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      </div>
-      <div>
-        <input type="text" id="username" name="username" placeholder="Enter your username" required>
-      </div>
-      <div>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
-      </div>]
-      <div>
-        <input type="submit" name="submit" value="Sign Up">
-      </div>
-      <p>Have an account? <a href="{{ url_for('login') }}">Login</a></p>
-    </form>
-  </div>
+        document.getElementById('password-toggle').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.menu-container')) {
+                document.getElementById('dropdown-menu').classList.remove('visible');
+            }
+        });
+    </script>
 </body>
 </html>

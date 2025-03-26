@@ -8,8 +8,7 @@ def get_db_connection():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="rootme1",
-            database="cloud"
+            database="cloud256"
         )
         return connection
     except Error as e:
@@ -35,15 +34,15 @@ def get_user_by_email(email):
         connection.close()
 
 # Function to add a new user
-def add_user(email, username, password):
-    hashed_password = generate_password_hash(password, method="pbkdf2:sha256", salt_length=16)
+def add_user(email, username, password_hash):
+    hashed_password = generate_password_hash(password_hash, method="pbkdf2:sha256", salt_length=16)
     connection = get_db_connection()
     if not connection:
         return False
 
     try:
         cursor = connection.cursor()
-        query = "INSERT INTO users (email, username, password) VALUES (%s, %s, %s)"
+        query = "INSERT INTO users (email, username, password_hash) VALUES (%s, %s, %s)"
         cursor.execute(query, (email, username, hashed_password))
         connection.commit()
         return True
@@ -73,6 +72,48 @@ def get_all_users(current_username):
     except Error as e:
         print(f"Error retrieving users: {e}")
         return []
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def get_encryption_key_from_db():
+    """Retrieve the encryption key from the database."""
+    connection = get_db_connection()
+    if not connection:
+        return None  # Return None if connection fails
+
+    try:
+        cursor = connection.cursor()
+        query = "SELECT key_value FROM encryption_keys ORDER BY created_at DESC LIMIT 1"
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        if result:
+            return result[0]  # Return the key as a string
+        return None  # No key found
+    except Error as e:
+        print(f"Error retrieving encryption key: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+def store_encryption_key_to_db(key_value):
+    """Store a new encryption key in the database."""
+    connection = get_db_connection()
+    if not connection:
+        return False  # Return False if connection fails
+
+    try:
+        cursor = connection.cursor()
+        query = "INSERT INTO encryption_keys (key_value) VALUES (%s)"
+        cursor.execute(query, (key_value,))
+        connection.commit()
+        return True  # Success
+    except Error as e:
+        print(f"Error storing encryption key: {e}")
+        return False
     finally:
         cursor.close()
         connection.close()

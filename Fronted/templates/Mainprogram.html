@@ -1,83 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud256 - My Files</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='Mainprog.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('serve_static', filename='Mainprog.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+
+    <!-- Navigation Bar -->
     <div class="navbar">
         <div class="logo">
-            <a href="{{ url_for('main_program') }}"><img src="{{ url_for('static', filename='images/logotosite.webp') }}" alt="Logo"></a>
+            <a href="{{ url_for('main_program') }}">
+                <img src="{{ url_for('static', filename='images/logotosite.webp') }}" alt="Cloud256 Logo">
+            </a>
         </div>
         <div class="user">
             <div class="add">
                 <a href="{{ url_for('upload_file') }}">
-                    <img src="{{ url_for('static', filename='cloud-arrow-up.svg') }}" alt="Upload">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload
                 </a>
-                <a href="{{ url_for('logout') }}" alt="Logout">
-                    Logout
+                <a href="{{ url_for('logout') }}">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
                 </a>
             </div>
         </div>
     </div>
 
-     <div class="container">
+    <!-- Main Content -->
+    <div class="container">
         <h1>My Files</h1>
-        <p>Below is a list of your uploaded files:</p>
+        <p>Welcome back, <strong>{{ session['username'] }}</strong>! Manage your uploaded files below.</p>
 
-        <ul>
-            {% for file in files %}
-            <li>
-                <a href="{{ url_for('serve_file', filename=file) }}" target="_blank">{{ file }}</a>
-                |
-                <a href="{{ url_for('download_file', filename=file) }}">Download</a>
-                |
-                <form action="{{ url_for('delete_file', filename=file) }}" method="POST" style="display:inline;"
-                      onsubmit="return confirm('Are you sure you want to delete this file?');">
-                    <button type="submit" style="color: red; background: none; border: none; cursor: pointer;">Delete</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-
-        <h2>Start a Chat</h2>
-        <p>Select a user to start a chat:</p>
-        <ul>
-            {% for user in users %}
-                {% if user.username != session['username'] %}
+        <!-- Files Section -->
+        <div class="file-list">
+            {% if files %}
+                <ul>
+                    {% for file in files %}
                     <li>
-                        <a href="{{ url_for('start_chat', username=user.username) }}">Chat with {{ user.username }}</a>
+                        <span>{{ file }}</span>
+                        <a href="{{ url_for('download_file', filename=file) }}" title="Download">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
+                        <form action="{{ url_for('delete_file', filename=file) }}" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this file?');">
+                            <button type="submit" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
                     </li>
-                {% endif %}
-            {% endfor %}
-        </ul>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div style="padding: 2rem; text-align: center;">
+                    <i class="fa-solid fa-cloud" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
+                    <p>You haven't uploaded any files yet. Click the upload button to get started!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Chat Section -->
+        <h2>Start a Chat</h2>
+        <p>Connect with other users on Cloud256:</p>
+
+        <div class="user-chat-section">
+            {% if users|selectattr('username', 'ne', session['username'])|list %}
+                <ul class="user-chat-list">
+                    {% for user in users %}
+                        {% if user.username != session['username'] %}
+                            <li>
+                                <a href="{{ url_for('start_chat', username=user.username) }}">
+                                    <i class="fa-solid fa-message"></i> Chat with {{ user.username }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="text-align: center; padding: 1rem;">No other users are available for chat at the moment.</p>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="end">
+    <!-- Footer -->
+    <div class="end footer-margin">
         <a href="#">Terms & Conditions</a> |
-        <a href="#">Policy</a>
-        <p>Copyright © 2024 Inocen, All rights reserved.</p>
+        <a href="#">Privacy Policy</a> |
+        <a href="#">Contact Us</a>
+        <p>Copyright © 2024 Cloud256 by Inocen. All rights reserved.</p>
     </div>
 
-    <script>
-        const socket = io.connect();
-
-        // Assuming session is available for current user
-        const currentUser = "{{ session['username'] }}";
-        const chatBox = document.getElementById('chat-box');
-
-        // Listen for incoming messages and display them
-        socket.on('receive_message', function(data) {
-            const messageElement = document.createElement('p');
-            messageElement.textContent = `${data.username}: ${data.message}`;
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll to bottom
-        });
-
-        // Function to send a message to the server
-        function sendMessage(message) {
-            const room = "{{ room }}";
-    </script>
+</body>
+</html>
