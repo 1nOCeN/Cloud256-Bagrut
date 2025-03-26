@@ -9,7 +9,7 @@ from io import BytesIO
 
 # Hardcoded paths - typical in dev environments
 app = Flask(__name__, template_folder=r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\templates", static_folder= r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\static")
-socketio = SocketIO(app, cors_allowed_origins="*")  # Allow all origins for easier dev
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # Simple secret key - not production quality but works
 app.secret_key = "b5jT$9c!KpQw#2Ls"
@@ -395,5 +395,4 @@ def server_error(e):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Run with debug=True for auto-reload
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
