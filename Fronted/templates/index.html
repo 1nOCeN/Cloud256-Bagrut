@@ -1,24 +1,34 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud256</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='MainC.css') }}">
-    <script src="Mainjs.js"></script>
+    <title>Cloud256 - Secure Cloud Storage</title>
     <style>
         :root {
             --primary-color: #4A90E2;
             --secondary-color: #2C3E50;
-            --text-color: #333;
-            --background-color: #f8f9fa;
+            --accent-color: #2ECC71;
+            --background-dark: #121212;
+            --surface-dark: #1E1E1E;
+            --text-primary: #E0E0E0;
+            --text-secondary: #B0B0B0;
+            --shadow-subtle: rgba(255,255,255,0.05);
+            --shadow-medium: rgba(255,255,255,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: all 0.3s ease;
         }
 
         body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            line-height: 1.6;
-            background-color: var(--background-color);
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.7;
+            background-color: var(--background-dark);
+            color: var(--text-primary);
         }
 
         .navbar {
@@ -26,21 +36,28 @@
             justify-content: space-between;
             align-items: center;
             padding: 1rem 2rem;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: rgba(30,30,30,0.95);
+            box-shadow: 0 4px 10px var(--shadow-subtle);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
         .logo img {
-            height: 40px;
-            transition: transform 0.3s ease;
+            height: 50px;
+            filter: brightness(0.8) contrast(1.2);
+            transition: all 0.4s ease;
         }
 
         .logo img:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) rotate(3deg);
+            filter: brightness(1) contrast(1.2);
+        }
+
+        .dots {
+            position: relative;
         }
 
         .dots button {
@@ -50,27 +67,43 @@
             cursor: pointer;
             padding: 8px;
             border-radius: 50%;
-            transition: background-color 0.3s;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
         }
 
         .dots button:hover {
-            background-color: #f0f0f0;
+            background-color: rgba(255,255,255,0.1);
+            transform: rotate(90deg);
         }
 
         .box2 {
             display: none;
             position: absolute;
-            right: 20px;
-            background: white;
+            left: 0;
+            top: 100%;
+            background: var(--surface-dark);
             padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 15px var(--shadow-subtle);
+            border: 1px solid rgba(255,255,255,0.1);
+            min-width: 150px;
+        }
+
+        .dots:hover .box2 {
+            display: block;
         }
 
         .box2 a {
-            color: var(--text-color);
+            color: var(--text-secondary);
             text-decoration: none;
             font-weight: 500;
+            display: block;
+            padding: 0.5rem 0;
+            transition: color 0.3s ease;
+        }
+
+        .box2 a:hover {
+            color: var(--primary-color);
         }
 
         .Video {
@@ -79,11 +112,26 @@
             overflow: hidden;
         }
 
+        .Video::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                rgba(74, 144, 226, 0.4),
+                rgba(44, 62, 80, 0.4)
+            );
+            z-index: 1;
+        }
+
         .Video video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.7);
+            filter: brightness(0.4);
         }
 
         .Header {
@@ -94,16 +142,21 @@
             text-align: center;
             color: white;
             z-index: 2;
+            max-width: 90%;
         }
 
         .Header p {
             font-size: 2.5rem;
-            margin: 0;
-            font-weight: bold;
+            font-weight: 700;
+            line-height: 1.4;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
         .Header p2 {
-            color: var(--primary-color);
+            color: var(--accent-color);
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 1.8rem;
         }
 
         .SignIn {
@@ -122,12 +175,14 @@
             border: none;
             border-radius: 30px;
             cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 8px 15px rgba(74, 144, 226, 0.3);
+            transition: all 0.4s ease;
         }
 
         .SignIn button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(74, 144, 226, 0.4);
+            background-color: #3a7bd5;
         }
 
         .SignIn a {
@@ -140,18 +195,27 @@
             display: flex;
             flex-direction: column;
             gap: 4rem;
+            background-color: var(--background-dark);
         }
 
         .container1, .container2 {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 3rem;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
-            background: white;
+            padding: 3rem;
+            background: var(--surface-dark);
             border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow:
+                0 15px 25px var(--shadow-subtle),
+                0 5px 15px var(--shadow-medium);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.4s ease;
+        }
+
+        .container1:hover, .container2:hover {
+            transform: scale(1.02);
         }
 
         .container2 {
@@ -159,9 +223,19 @@
         }
 
         .img img {
-            max-width: 300px;
+            max-width: 350px;
             height: auto;
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow:
+                0 15px 25px var(--shadow-subtle),
+                0 10px 20px rgba(0,0,0,0.2);
+            filter: brightness(0.9);
+            transition: transform 0.4s ease;
+        }
+
+        .img img:hover {
+            transform: scale(1.05) rotate(2deg);
+            filter: brightness(1);
         }
 
         .box {
@@ -169,34 +243,46 @@
         }
 
         .box h {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--secondary-color);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
             display: block;
             margin-bottom: 1rem;
+            letter-spacing: -0.05em;
+        }
+
+        .box p {
+            color: var(--text-secondary);
         }
 
         .end {
             text-align: center;
-            padding: 2rem;
-            background-color: var(--secondary-color);
-            color: white;
+            padding: 3rem;
+            background: linear-gradient(135deg, var(--secondary-color), #121212);
+            color: var(--text-secondary);
         }
 
         .end a {
-            color: white;
+            color: var(--text-secondary);
             text-decoration: none;
             margin: 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .end a:hover {
+            color: var(--accent-color);
         }
 
         @media (max-width: 768px) {
             .Header p {
-                font-size: 1.8rem;
+                font-size: 2rem;
             }
 
             .container1, .container2 {
                 flex-direction: column;
                 text-align: center;
+                padding: 2rem;
+                gap: 2rem;
             }
 
             .img img {
@@ -208,11 +294,11 @@
 <body>
     <div class="navbar">
         <div class="logo">
-            <a href="https://1nocen.github.io/Cloud256/"><img src="logotosite.webp" alt="Cloud256 Logo"></a>
-        </div>  
+            <img src="{{ url_for('static', filename='images/Logo.png') }}" alt="SafeCloud Logo">
+        </div>
         <div class="dots">
-            <button onclick="toggleBox()">&#8942;</button>
-            <div class="box2" id="box2">
+            <button>&#8942;</button>
+            <div class="box2">
                 <a href="#">Support &#8599;</a>
             </div>
         </div>
@@ -225,15 +311,11 @@
     </div>
 
     <div class="Header">
-        <p>הצטרף למקום בו כל הקבצים, התמונות<br> וקבצי ה-PDF שלך יהיו <p2>בטוחים.</p2></p>
-    </div>
-
-    <div class="descprition">
-        <p>Cloud256</p>
+        <p>Join a place where all your files, images<br> and PDF documents will be <p2>secure.</p2></p>
     </div>
 
     <div class="SignIn">
-        <button><a href="{{ url_for('login') }}">התחבר</a></button>
+        <button><a href="{{ url_for('login') }}">Sign In</a></button>
     </div>
 
     <div class="Con">
@@ -242,8 +324,8 @@
                 <img src="cloud-removebg-preview.png" alt="Cloud Storage">
             </div>
             <div class="box">
-                <h>אחסון מאובטח בענן</h>
-                <p>שמור את הקבצים החשובים שלך בצורה מאובטחת בענן. עם Cloud256, תוכל לגשת לקבצים שלך מכל מקום, בכל זמן, עם אבטחה מתקדמת ושמירה על פרטיותך.</p>
+                <h>Secure Cloud Storage</h>
+                <p>Save your important files securely in the cloud. With Cloud256, you can access your files from anywhere, anytime, with advanced security and privacy protection.</p>
             </div>
         </div>
 
@@ -252,15 +334,15 @@
                 <img src="filesss.png" alt="File Management">
             </div>
             <div class="box">
-                <h>ניהול קבצים חכם</h>
-                <p>נהל את כל הקבצים שלך בקלות עם ממשק משתמש ידידותי. ארגן, שתף ושמור על הקבצים החשובים שלך בצורה חכמה ויעילה.</p>
+                <h>Smart File Management</h>
+                <p>Manage all your files easily with a user-friendly interface. Organize, share, and keep your important files in a smart and efficient manner.</p>
             </div>
         </div>
     </div>
 
     <div class="end">
-        <a href="#">תנאים והגבלות</a> | <a href="#">מדיניות פרטיות</a> | 
-        <p2>כל הזכויות שמורות © 2024 Inocen</p2>
+        <a href="#">Terms and Conditions</a> | <a href="#">Privacy Policy</a> |
+        <p2>All Rights Reserved © 2024 Inocen</p2>
     </div>
 </body>
 </html>

@@ -12,10 +12,11 @@
     <!-- Navigation Bar -->
     <div class="navbar">
         <div class="logo">
-            <a href="{{ url_for('main_program') }}">
-                <img src="{{ url_for('static', filename='images/logotosite.webp') }}" alt="Cloud256 Logo">
-            </a>
+            <!-- Logo image -->
+            <img src="{{ url_for('static', filename='images/Logo.png') }}" alt="SafeCloud Logo">
+            <h1>Cloud256</h1>
         </div>
+
         <div class="user">
             <div class="add">
                 <a href="{{ url_for('upload_file') }}">
@@ -36,7 +37,7 @@
         <!-- Files Section -->
         <div class="file-list">
             {% if files %}
-                <ul>
+                <ul id="file-list">
                     {% for file in files %}
                     <li>
                         <span>{{ file }}</span>
@@ -52,6 +53,9 @@
                     </li>
                     {% endfor %}
                 </ul>
+                {% if show_more %}
+                 <button id="show-all-btn" onclick="showAllFiles()">Show All</button>
+                {% endif %}
             {% else %}
                 <div style="padding: 2rem; text-align: center;">
                     <i class="fa-solid fa-cloud" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
@@ -90,6 +94,36 @@
         <a href="#">Contact Us</a>
         <p>Copyright © 2024 Cloud256 by Inocen. All rights reserved.</p>
     </div>
+
+    <script>
+    function showAllFiles() {
+    const showAllButton = document.getElementById("show-all-btn");
+
+    // Hide the "Show All" button when clicked
+    showAllButton.style.display = "none";
+
+    fetch(`/mainprogram?show_all=true`, {
+        method: "GET",
+    })
+    .then(response => response.text())
+    .then(data => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newFileItems = doc.querySelectorAll("#file-list li");
+        const fileList = document.querySelector("#file-list");
+
+        // Append all file items
+        newFileItems.forEach(item => {
+            fileList.appendChild(item);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching all files:', error);
+    });
+}
+
+</script>
+
 
 </body>
 </html>

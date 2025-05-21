@@ -8,16 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="video-container">
-        <video autoplay muted loop id="background-video">
-            <source src="your-background-video.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-    </div>
 
     <nav class="navbar">
         <div class="logo">
-            <img src="your-logo.png" alt="SafeCloud Logo">
+            <!-- Logo image -->
+            <img src="{{ url_for('static', filename='images/logotosite.webp') }}" alt="SafeCloud Logo">
             <h1>Cloud256</h1>
         </div>
         <div class="menu-container">
@@ -66,24 +61,6 @@
                 <button type="submit" class="btn-primary">Create Account</button>
             </div>
 
-            <div class="divider">
-                <span class="divider-line"></span>
-                <span class="divider-text">or sign up with</span>
-                <span class="divider-line"></span>
-            </div>
-
-            <div class="social-buttons">
-                <button type="button" class="social-btn">
-                    <i class="fab fa-google"></i>
-                </button>
-                <button type="button" class="social-btn">
-                    <i class="fab fa-facebook-f"></i>
-                </button>
-                <button type="button" class="social-btn">
-                    <i class="fab fa-apple"></i>
-                </button>
-            </div>
-
             <div class="login-link">
                 Already have an account?
                 <a href="{{ url_for('login') }}">Login</a>
@@ -118,6 +95,48 @@
                 document.getElementById('dropdown-menu').classList.remove('visible');
             }
         });
+
+         <script>
+        document.querySelector('form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Prepare the data to send to the backend
+            const formData = {
+                email: email,
+                username: username,
+                password: password,
+            };
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store the token in localStorage
+                    localStorage.setItem('api_token', data.token);
+
+                    alert('Registration successful!');
+                    // Redirect to the main page or dashboard
+                    window.location.href = '/mainprogram';
+                } else {
+                    alert(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+
     </script>
 </body>
 </html>

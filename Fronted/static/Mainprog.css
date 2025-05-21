@@ -364,3 +364,7 @@ button:focus, a:focus, input:focus {
     outline: 2px solid #60a5fa;
     outline-offset: 2px;
 }
+#show-more-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

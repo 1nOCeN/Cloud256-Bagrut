@@ -1,18 +1,29 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, send_file
+import base64
+import jwt, threading, time, datetime, os, secrets
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, send_file, jsonify
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
-from db import get_user_by_email, add_user, get_encryption_key_from_db, store_encryption_key_to_db, get_all_users
-import os
+from db import get_user_by_email, add_user, get_encryption_key_from_db, store_encryption_key_to_db, get_all_users, \
+    login_user, token_required, generate_api_token, store_api_token, get_api_token_from_db
 from flask_socketio import SocketIO, join_room, emit
 from cryptography.fernet import Fernet  # Encryption library
 from io import BytesIO
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+
 
 # Hardcoded paths - typical in dev environments
-app = Flask(__name__, template_folder=r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\templates", static_folder= r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\static")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+app = Flask(__name__, template_folder=r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\templates", static_folder=r"C:\Users\Admin\Documents\GitHub\Cloud256-Bagrut\Fronted\static"
+)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
+SECRET_KEY = secrets.token_hex(32)
 # Simple secret key - not production quality but works
-app.secret_key = "b5jT$9c!KpQw#2Ls"
+app.secret_key = SECRET_KEY
 app.config["SESSION_TYPE"] = "filesystem"
 
 # Network share for storage
@@ -20,47 +31,130 @@ BASE_UPLOAD_FOLDER = r"\\DESKTOP-1EOTSNC\Cloud256-Database2"
 os.makedirs(BASE_UPLOAD_FOLDER, exist_ok=True)
 app.config["BASE_UPLOAD_FOLDER"] = BASE_UPLOAD_FOLDER
 
+def start_progress_tracking():
+    global progress_thread
+    if not progress_thread or not progress_thread.is_alive():
+        print("Starting progress tracking thread...")  # Debugging
+        progress_thread = threading.Thread(target=background_progress_tracking)
+        progress_thread.daemon = True  # Allow thread to exit when main program exits
+        progress_thread.start()
+    else:
+        print("Progress tracking thread is already running.")  # Debugging
+
+
+progress_thread = None
+thread_lock = threading.Lock()
+
+@socketio.on("connect")
+def start_thread():
+    global progress_thread
+    with thread_lock:
+        if progress_thread is None or not progress_thread.is_alive():
+            progress_thread = threading.Thread(target=background_progress_tracking)
+            progress_thread.daemon = True
+            progress_thread.start()
+
+def background_progress_tracking():
+    """Example background function to track file progress."""
+    while True:
+        time.sleep(10)  # Simulate periodic updates
+        socketio.emit("progress_update", {"message": "Tracking progress..."})
+
+@app.route("/api/get-token", methods=["GET"])
+@token_required  # Ensure user authentication
+def get_user_token(user):
+    return {"api_token": user["api_token"]}
+
+
+@app.route("/api/my-files", methods=["GET"])
+@token_required
+def api_get_my_files(user):
+    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], user["username"])
+
+    if not os.path.exists(user_folder):
+        return {"files": []}  # Return empty if no files found
+
+    files = [f for f in os.listdir(user_folder) if f.endswith('.enc')]
+    return {"files": files}
+
 # Encryption key generation (should be stored securely and reused)
-def generate_key():
-    # In a real app, generate once and store securely
-    return Fernet.generate_key()
+def generate_aes_key():
+        return os.urandom(32)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
 
 # Store this key securely (for simplicity, using this here)
-encryption_key = generate_key()
-cipher_suite = Fernet(encryption_key)
+encryption_key = generate_aes_key()
 
 def get_encryption_key():
-    """Retrieve the stored encryption key or generate a new one if not found."""
     key = get_encryption_key_from_db()
     if key:
-        return key.encode()  # Ensure it's in bytes format
+        # Decrypt AES key using RSA private key
+        encrypted_key = base64.b64decode(key)
+        aes_key = rsa_private_key.decrypt(
+            encrypted_key,
+            padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        )
+        return aes_key
     else:
-        key = Fernet.generate_key()
-        store_encryption_key_to_db(key.decode())  # Store new key
-        return key
+        aes_key = generate_aes_key()
 
-# Load encryption key
-encryption_key = get_encryption_key()
-cipher_suite = Fernet(encryption_key)
+        # Encrypt AES key with RSA public key before storing
+        encrypted_key = rsa_public_key.encrypt(
+            aes_key,
+            padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
+        )
+        store_encryption_key_to_db(base64.b64encode(encrypted_key).decode())
+        return aes_key
+
+
+def generate_rsa_keys():
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public_key = private_key.public_key()
+
+    # Save private key
+    with open("private_key.pem", "wb") as f:
+        f.write(private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        ))
+
+    # Save public key
+    with open("public_key.pem", "wb") as f:
+        f.write(public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ))
+
+def load_rsa_keys():
+    with open("private_key.pem", "rb") as f:
+        private_key = serialization.load_pem_private_key(f.read(), password=None)
+
+    with open("public_key.pem", "rb") as f:
+        public_key = serialization.load_pem_public_key(f.read())
+
+    return private_key, public_key
+
+rsa_private_key, rsa_public_key = load_rsa_keys()
 
 def encrypt_file(file_path):
-    """Encrypt the file and save the encrypted version."""
+    key = encryption_key
+    nonce = os.urandom(12)
+    cipher = Cipher(algorithms.AES(key), modes.GCM(nonce), backend=default_backend())
+    encryptor = cipher.encryptor()
+
     with open(file_path, "rb") as f:
-        file_data = f.read()
+        data = f.read()
 
-    # Encrypt the file data
-    encrypted_data = cipher_suite.encrypt(file_data)
+    encrypted = encryptor.update(data) + encryptor.finalize()
 
-    # Save the encrypted file
-    encrypted_file_path = file_path + ".enc" # Append .enc to encrypted file
-    with open(encrypted_file_path, "wb") as f:
-        f.write(encrypted_data)
+    with open(file_path + ".enc", "wb") as f:
+        f.write(nonce + encryptor.tag + encrypted)  # prepend nonce and tag
 
-    return encrypted_file_path
+    return file_path + ".enc"
 
 
 # Basic file constraints
@@ -78,6 +172,11 @@ def home():
     # Just redirect to login
     return redirect(url_for("login"))
 
+@app.route("/index")
+def index():
+    return render_template("index.html")
+
+from flask import redirect, url_for, session, request, render_template
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -93,20 +192,32 @@ def login():
 
         # Basic validation
         if not email or not password:
-            return "Missing email or password", 400
+            return redirect(url_for("login"))  # Redirect back if missing credentials
 
         # Check credentials
         user = get_user_by_email(email)
         if user and check_password_hash(user["password_hash"], password):
+            # Save user details in session
             session["user_id"] = user["id"]
             session["username"] = user["username"]
+
+            # Retrieve the API token from the database
+            token = get_api_token_from_db(user["id"])
+
+            # If no token exists in the DB, handle this scenario (e.g., generate a new token or handle it accordingly)
+            if not token:
+                # Optionally generate a new token here and store it in the DB if it's missing
+                token = generate_api_token(user["id"])
+                store_api_token(user["id"], token)
+
+            # Redirect to the main program
             return redirect(url_for("main_program"))
 
         # Auth failed
         error_msg = "Invalid email or password"
-        return "Invalid credentials", 401
 
     return render_template("Login.html", error=error_msg)
+
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -118,27 +229,26 @@ def register():
     email = request.form.get("email")
     username = request.form.get("username")
     password = request.form.get("password")
-    confirm = request.form.get("confirm_password")  # Not used, but kept from form
 
-    # Quick validation
+    # Validation
     if not email or not username or not password:
         return "All fields are required.", 400
 
-    # Super simple email check
     if "@" not in email or "." not in email:
         return "Invalid email format", 400
 
-    # Check for existing user
     if get_user_by_email(email):
         return "Email already exists.", 400
 
-    # Basic password strength check
     if len(password) < 8:
         return "Password must be at least 8 characters", 400
 
-    # Try to add user
-    if add_user(email, username, password):
-        return redirect(url_for("login"))
+    # Create user and get API token
+    api_token = add_user(email, username, password)
+
+    if api_token:
+        return jsonify({"message": "Registration successful", "token": api_token})
+
     return "Error registering user.", 500
 
 
@@ -188,87 +298,94 @@ def upload_file():
     if request.method == "GET":
         return render_template("upload.html")
 
+    start_progress_tracking()
+
     if "file" not in request.files:
         return "No file part", 400
 
-    file = request.files["file"]
-    if file.filename == "":
+    files = request.files.getlist("file")
+    if not files:
         return "No file selected", 400
 
-    print(f"Received file: {file.filename}")  # Debugging
+    print(f"Received files: {[file.filename for file in files]}")  # Debugging
 
-    if not allowed_file(file.filename):
-        return f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}", 400
-
-    filename = secure_filename(file.filename)
     username = session.get("username")
-
     if not username:
         return redirect(url_for("login"))
 
     user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
     os.makedirs(user_folder, exist_ok=True)
 
-    temp_file_path = os.path.join(user_folder, filename)
-    try:
-        file.save(temp_file_path)
-        print(f"File saved to {temp_file_path}")  # Debugging
-    except Exception as e:
-        print(f"Error saving file: {e}")  # Debugging
-        return f"Error saving file: {str(e)}", 500
+    encrypted_file_paths = []
+    for file in files:
+        if file.filename == "":
+            continue
 
-    encrypted_file_path = encrypt_file(temp_file_path)
+        if not allowed_file(file.filename):
+            return f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}", 400
 
-    os.remove(temp_file_path)  # Removing original file after encryption
+        filename = secure_filename(file.filename)
+        temp_file_path = os.path.join(user_folder, filename)
+        try:
+            file.save(temp_file_path)
+            print(f"File saved to {temp_file_path}")  # Debugging
+        except Exception as e:
+            print(f"Error saving file: {e}")  # Debugging
+            return f"Error saving file: {str(e)}", 500
 
-    print(f"File encrypted and saved as {encrypted_file_path}")  # Debugging
+        encrypted_file_path = encrypt_file(temp_file_path)
+        encrypted_file_paths.append(encrypted_file_path)
+
+        os.remove(temp_file_path)  # Removing original file after encryption
+
+        print(f"File encrypted and saved as {encrypted_file_path}")  # Debugging
 
     return redirect(url_for("main_program"))
 
-@app.route("/mainprogram", methods=["GET", "POST"])
+
+@app.route("/mainprogram")
 def main_program():
-    # Must be logged in
     username = session.get("username")
     if not username:
         return redirect(url_for("login"))
 
-    # Setup user folder
     user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
     os.makedirs(user_folder, exist_ok=True)
 
-    # Get user's files
     try:
         files = os.listdir(user_folder)
+        files = [f for f in files if f.endswith('.enc')]  # Only list encrypted files
     except Exception as e:
-        files = []  # Empty if error
+        files = []
 
-    # Get all other users
+    # Check if 'show_all' is passed in the query parameters
+    show_all = request.args.get("show_all", default=False, type=bool)
+
+    if show_all:
+        # Return all files if "show_all" is True
+        files_to_display = files
+        show_more = False  # No need for a "Show More" button
+        offset = 0  # Initialize offset to 0 when showing all files
+    else:
+        # Handle the offset if it's passed from the frontend
+        offset = request.args.get("offset", default=0, type=int)
+
+        # Limit the files to 5 initially or based on the offset
+        files_to_display = files[offset:offset + 5]
+        show_more = len(files) > (offset + 5)  # Check if more files are available
+
+    # If this is an AJAX request, return only the file list HTML
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return render_template("file_list_partial.html", files=files_to_display, show_more=show_more, offset=offset + 5)
+
     users = get_all_users(username)
 
-    # Handle viewing other user's files
-    selected_user = request.form.get("user")
-    selected_user_files = []
-
-    if selected_user:
-        selected_user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], selected_user)
-        os.makedirs(selected_user_folder, exist_ok=True)
-
-        try:
-            selected_user_files = os.listdir(selected_user_folder)
-        except Exception as e:
-            selected_user_files = []
-
-    # Sort alphabetically
-    files.sort()
-    selected_user_files.sort()
-
-    # Show the main program page
     return render_template(
         "Mainprogram.html",
-        files=files,
+        files=files_to_display,
         users=users,
-        selected_user=selected_user,
-        selected_user_files=selected_user_files
+        show_more=show_more,
+        offset=offset + 5  # Increase the offset for the next request (only if not showing all files)
     )
 
 @app.route("/uploads/<filename>")
@@ -284,80 +401,79 @@ def serve_file(filename):
         return "File not found", 404
 
     try:
-        # Read and decrypt the file content
         with open(encrypted_file_path, 'rb') as f:
-            encrypted_file_content = f.read()
+            # Assuming the first 16 bytes are the IV
+            iv = f.read(16)
+            encrypted_data = f.read()
 
-        decrypted_file_content = cipher_suite.decrypt(encrypted_file_content)
+        # Set up AES decryption
+        cipher = Cipher(algorithms.AES(encryption_key), modes.CBC(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(encrypted_data) + decryptor.finalize()
 
-        # Create a temporary file for download
-        decrypted_file = BytesIO(decrypted_file_content)
-        decrypted_file.seek(0)  # Move pointer to beginning
+        # Optional: remove padding if you used PKCS7
+        from cryptography.hazmat.primitives import padding
+        unpadder = padding.PKCS7(128).unpadder()
+        decrypted_data = unpadder.update(decrypted_data) + unpadder.finalize()
 
-        return send_from_directory(user_folder, filename, as_attachment=True)
-
-    except Exception as e:
-        return f"Error retrieving file: {str(e)}", 500
-
-def decrypt_file(encrypted_file_path):
-    """Decrypt the file and save the decrypted version."""
-    with open(encrypted_file_path, "rb") as f:
-        encrypted_data = f.read()
-
-    # Decrypt the file data
-    decrypted_data = cipher_suite.decrypt(encrypted_data)
-
-    # Save the decrypted file
-    decrypted_file_path = encrypted_file_path.replace(".enc", "")  # Remove .enc
-    with open(decrypted_file_path, "rb") as f:
-        f.write(decrypted_data)
-    return decrypted_file_path
-
-
-@app.route("/download/<filename>")
-def download_file(filename):
-    """Handle file download with decryption."""
-    username = session.get("username")
-    if not username:
-        return "User not logged in", 403
-
-    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
-    encrypted_file_path = os.path.join(user_folder, filename)  # Append .enc
-
-    # Debugging
-    print(f"Looking for file: {encrypted_file_path}")
-
-    if not os.path.exists(encrypted_file_path):
-        print("File not found!")
-        return "File not found", 404
-
-    try:
-        # Read encrypted file
-        with open(encrypted_file_path, "rb") as encrypted_file:
-            encrypted_data = encrypted_file.read()
-
-        # Debugging: Check file size
-        print(f"Encrypted file size: {len(encrypted_data)} bytes")
-
-        # Decrypt the content
-        decrypted_data = cipher_suite.decrypt(encrypted_data)
-
-        # Debugging: Check decrypted file size
-        print(f"Decrypted file size: {len(decrypted_data)} bytes")
-
-        # Serve as an in-memory file
+        # Serve decrypted file
         decrypted_file = BytesIO(decrypted_data)
         decrypted_file.seek(0)
 
         return send_file(
             decrypted_file,
             as_attachment=True,
-            download_name=filename.replace(".enc", ""),  # Remove .enc from the filename
+            download_name=filename.replace(".enc", ""),
             mimetype="application/octet-stream"
         )
 
     except Exception as e:
-        print(f"Error decrypting file: {str(e)}")  # Debugging
+        return f"Error retrieving file: {str(e)}", 500
+
+
+
+
+@app.route("/download/<filename>")
+def download_file(filename):
+    """Handle file download with AES decryption."""
+    username = session.get("username")
+    if not username:
+        return "User not logged in", 403
+
+    user_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], username)
+    encrypted_file_path = os.path.join(user_folder, filename)
+
+    if not os.path.exists(encrypted_file_path):
+        return "File not found", 404
+
+    try:
+        # Read encrypted file content
+        with open(encrypted_file_path, "rb") as encrypted_file:
+            encrypted_data = encrypted_file.read()
+
+        # Extract nonce (12 bytes), tag (16 bytes), and ciphertext
+        nonce = encrypted_data[:12]
+        tag = encrypted_data[12:28]
+        ciphertext = encrypted_data[28:]
+
+        # Create AES-GCM cipher
+        cipher = Cipher(algorithms.AES(encryption_key), modes.GCM(nonce, tag), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+        # Create in-memory file for download
+        decrypted_file = BytesIO(decrypted_data)
+        decrypted_file.seek(0)
+
+        return send_file(
+            decrypted_file,
+            as_attachment=True,
+            download_name=filename.replace(".enc", ""),  # Clean filename
+            mimetype="application/octet-stream"
+        )
+
+    except Exception as e:
+        print(f"Error decrypting file: {str(e)}")
         return f"Error retrieving file: {str(e)}", 500
 
 
@@ -395,4 +511,4 @@ def server_error(e):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=True)
