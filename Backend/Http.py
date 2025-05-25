@@ -264,10 +264,13 @@ def start_chat(username):
     return render_template("Chat.html", room=room, username=username)
 
 
-# Socket stuff for chat
 @socketio.on('connect')
 def handle_connect():
-    print(f'User {session["username"]} connected')
+    username = session.get("username")
+    if username:
+        join_room(f"user_{username}")
+        print(f"User {username} connected and joined room user_{username}")
+
 
 @socketio.on('join')
 def on_join(data):
@@ -430,7 +433,63 @@ def serve_file(filename):
     except Exception as e:
         return f"Error retrieving file: {str(e)}", 500
 
+@app.route("/send_file/<recipient>", methods=["GET", "POST"])
+def send_file_to_user(recipient):
+    sender = session.get("username")
+    if not sender:
+        return redirect(url_for("login"))
 
+    # Prevent sending file to self
+    if sender == recipient:
+        return "You cannot send a file to yourself", 400
+
+    # Check recipient exists in DB (you already have get_all_users)
+    all_users = [u['username'] for u in get_all_users(sender)]
+    if recipient not in all_users:
+        return "Recipient user not found", 404
+
+    if request.method == "GET":
+        return render_template("send_file.html", recipient=recipient)
+
+    # POST method - handle file upload
+    if "file" not in request.files:
+        return "No file part", 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return "No file selected", 400
+
+    if not allowed_file(file.filename):
+        return f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}", 400
+
+    filename = secure_filename(file.filename)
+
+    # Save file temporarily
+    temp_path = os.path.join(app.config["BASE_UPLOAD_FOLDER"], "temp", filename)
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+    file.save(temp_path)
+
+    # Encrypt the file
+    encrypted_path = encrypt_file(temp_path)
+
+    # Remove temp plain file
+    os.remove(temp_path)
+
+    # Move encrypted file to recipient folder
+    recipient_folder = os.path.join(app.config["BASE_UPLOAD_FOLDER"], recipient)
+    os.makedirs(recipient_folder, exist_ok=True)
+    final_path = os.path.join(recipient_folder, os.path.basename(encrypted_path))
+    os.rename(encrypted_path, final_path)
+
+    # Notify recipient via SocketIO about new file
+    room = f"user_{recipient}"
+    socketio.emit("new_file_received", {
+        "from": sender,
+        "filename": os.path.basename(final_path),
+        "message": f"New file '{filename}' received from {sender}"
+    }, room=room)
+
+    return redirect(url_for("main_program"))
 
 
 @app.route("/download/<filename>")
