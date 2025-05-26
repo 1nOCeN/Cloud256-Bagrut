@@ -53,7 +53,6 @@
                 <div class="input-with-icon">
                     <i class="fas fa-lock"></i>
                     <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
-                    <i class="fas fa-eye password-toggle" id="password-toggle"></i>
                 </div>
             </div>
 
@@ -79,15 +78,6 @@
     <script>
         document.getElementById('menu-button').addEventListener('click', function() {
             document.getElementById('dropdown-menu').classList.toggle('visible');
-        });
-
-        document.getElementById('password-toggle').addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
         });
 
         document.addEventListener('click', function(event) {

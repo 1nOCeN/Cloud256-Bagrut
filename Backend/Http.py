@@ -1,12 +1,11 @@
 import base64
-import jwt, threading, time, datetime, os, secrets
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, send_file, jsonify
+import  threading, time, os, secrets
+from flask import Flask, send_from_directory, send_file, jsonify
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 from db import get_user_by_email, add_user, get_encryption_key_from_db, store_encryption_key_to_db, get_all_users, \
     login_user, token_required, generate_api_token, store_api_token, get_api_token_from_db
 from flask_socketio import SocketIO, join_room, emit
-from cryptography.fernet import Fernet  # Encryption library
 from io import BytesIO
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend

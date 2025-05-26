@@ -14,7 +14,7 @@ class RouteHandlers:
 
     def home(self):
         """דף הבית - הפניה לכניסה"""
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     def index(self):
         """דף אינדקס"""

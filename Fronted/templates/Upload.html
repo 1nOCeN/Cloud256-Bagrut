@@ -3,59 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='Mainprog.css') }}">
+    <title>Upload File - Cloud256</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         /* General body styles */
         html, body {
             height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow-x: hidden;
         }
 
-        /* Navigation Bar (if you want it consistent across all pages) */
+        /* Navigation Bar */
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #3b82f6;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
             padding: 1rem 2rem;
-            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
+
+        .navbar a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .navbar .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .navbar .logo img {
             height: 50px;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
         }
-        .navbar .user .add a {
-            color: white;
+
+        .navbar .logo img:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar .logo h1 {
+            color: #4a9eff;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .navbar .user a {
+            color: #4a9eff;
             text-decoration: none;
-            margin-left: 15px;
             font-size: 16px;
-            transition: 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .navbar .user .add a:hover {
-            opacity: 0.8;
+
+        .navbar .user a:hover {
+            background: rgba(74, 158, 255, 0.1);
+            transform: translateY(-2px);
         }
 
         /* Container Styling */
         .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            margin-top: 2rem;
-            height: calc(100% - 120px);
-            overflow-y: auto;
+            max-width: 800px;
+            margin: 2rem auto;
+            background: rgba(30, 30, 30, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 3rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #4a9eff;
         }
 
         h2 {
-            color: #3b82f6;
+            color: #4a9eff;
             text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: #4a9eff;
+            border-radius: 2px;
         }
 
         /* Upload Form Styling */
@@ -63,28 +126,67 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border: 2px dashed rgba(74, 158, 255, 0.3);
+            border-radius: 15px;
+            background: rgba(40, 40, 40, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-container:hover {
+            border-color: rgba(74, 158, 255, 0.6);
+            background: rgba(50, 50, 50, 0.7);
+            transform: translateY(-2px);
         }
 
         .upload-btn {
             display: inline-flex;
             align-items: center;
-            padding: 12px 20px;
-            background-color: #3b82f6;
+            padding: 1rem 2rem;
+            background: #4a9eff;
             color: white;
-            border-radius: 8px;
+            border: none;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
-            margin-bottom: 10px;
-            transition: 0.3s;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(74, 158, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-btn:hover::before {
+            left: 100%;
+        }
+
+        .upload-btn:hover {
+            background: #3a8eef;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(74, 158, 255, 0.4);
         }
 
         .upload-btn svg {
             margin-right: 8px;
+            transition: transform 0.3s ease;
         }
 
-        .upload-btn:hover {
-            background-color: #2563eb;
+        .upload-btn:hover svg {
+            transform: translateY(-2px);
         }
 
         #file-input {
@@ -93,44 +195,141 @@
 
         .file-name {
             font-size: 16px;
-            color: #333;
-            margin-top: 10px;
+            color: #b3b3b3;
+            margin-top: 1rem;
             display: none;
+            padding: 1rem;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 8px;
+            border-left: 4px solid #4a9eff;
+        }
+
+        .file-list {
+            max-width: 100%;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(60, 60, 60, 0.6);
+            border-radius: 8px;
+            border-left: 3px solid #4a9eff;
+        }
+
+        .file-item i {
+            color: #4a9eff;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
         }
 
         /* Back Link Styling */
         .back-link-container {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 2rem;
         }
 
         .back-link {
-            color: #3b82f6;
+            color: #4a9eff;
             text-decoration: none;
             font-size: 16px;
-            transition: 0.3s;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid rgba(74, 158, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .back-link:hover {
-            text-decoration: underline;
+            background: rgba(74, 158, 255, 0.1);
+            border-color: #4a9eff;
+            transform: translateY(-2px);
         }
 
         /* Footer */
         .end {
             text-align: center;
-            margin-top: 30px;
-            padding: 15px;
-            background: #3b82f6;
-            color: white;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .end a {
-            color: white;
+            color: #4a9eff;
             text-decoration: none;
-            margin: 0 10px;
-            transition: 0.3s;
+            margin: 0 15px;
+            transition: all 0.3s ease;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
         }
+
         .end a:hover {
-            text-decoration: underline;
+            color: #ffffff;
+            background: rgba(74, 158, 255, 0.2);
+        }
+
+        .end p {
+            margin-top: 1rem;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .container {
+                margin: 1rem;
+                padding: 2rem 1rem;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+
+            .upload-btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 14px;
+            }
+        }
+
+        /* Drag and drop styles */
+        .upload-container.dragover {
+            border-color: #4a9eff;
+            background: rgba(74, 158, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-text {
+            color: #b3b3b3;
+            font-size: 14px;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
@@ -139,46 +338,49 @@
     <!-- Navigation Bar -->
     <div class="navbar">
         <a href="{{ url_for('main_program') }}">
-        <div class="logo">
-            <!-- Logo image -->
-            <img src="{{ url_for('static', filename='images/Logo.png') }}" alt="SafeCloud Logo">
-            <h1>Cloud256</h1>
-        </div>
-    </a>
-        <div class="user">
-                <a href="{{ url_for('logout') }}">
-                    <i class="fa-solid fa-sign-out-alt"></i> Logout
-                </a>
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/Logo.png') }}" alt="Cloud256 Logo" onerror="this.style.display='none'">
+                <h1>Cloud256</h1>
             </div>
+        </a>
+        <div class="user">
+            <a href="{{ url_for('logout') }}">
+                <i class="fa-solid fa-sign-out-alt"></i>
+                Logout
+            </a>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="container">
-        <h2>Upload a File</h2>
-        <div class="container">
-    <h2>Upload Files</h2>
-    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
-        <div class="upload-container">
-            <!-- Add 'multiple' to allow users to select multiple files -->
-            <input type="file" name="file" id="file-input" multiple>
-            <label for="file-input" class="upload-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                Choose Files
-            </label>
-            <div id="file-name" class="file-name"></div>
-        </div>
-        <button type="submit" class="upload-btn">Upload</button>
-    </form>
-</div>
-
+        <h2>Upload Files</h2>
+        <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+            <div class="upload-container" id="upload-container">
+                <input type="file" name="file" id="file-input" multiple>
+                <label for="file-input" class="upload-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Choose Files
+                </label>
+                <div class="drop-zone-text">Or drag and drop files here</div>
+                <div id="file-list" class="file-list"></div>
+            </div>
+            <div style="text-align: center;">
+                <button type="submit" class="upload-btn">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload Files
+                </button>
+            </div>
+        </form>
 
         <div class="back-link-container">
-            <a href="{{ url_for('main_program') }}" class="back-link">Back to File Manager</a>
+            <a href="{{ url_for('main_program') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to File Manager
+            </a>
         </div>
     </div>
 
@@ -191,17 +393,77 @@
     </div>
 
     <script>
-        // Display the file name when selected
+        // File input change handler
         document.getElementById('file-input').addEventListener('change', function() {
-            const fileName = this.files[0] ? this.files[0].name : '';
-            const fileNameElement = document.getElementById('file-name');
-            if (fileName) {
-                fileNameElement.textContent = 'Selected file: ' + fileName;
-                fileNameElement.style.display = 'block';
-            } else {
-                fileNameElement.style.display = 'none';
-            }
+            displaySelectedFiles(this.files);
         });
+
+        // Drag and drop functionality
+        const uploadContainer = document.getElementById('upload-container');
+        const fileInput = document.getElementById('file-input');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadContainer.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadContainer.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadContainer.addEventListener(eventName, unhighlight, false);
+        });
+
+        uploadContainer.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            uploadContainer.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            uploadContainer.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            displaySelectedFiles(files);
+        }
+
+        function displaySelectedFiles(files) {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+
+            if (files.length > 0) {
+                fileList.style.display = 'block';
+                Array.from(files).forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <i class="fas fa-file"></i>
+                        <span>${file.name} (${formatFileSize(file.size)})</span>
+                    `;
+                    fileList.appendChild(fileItem);
+                });
+            } else {
+                fileList.style.display = 'none';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
     </script>
 
 </body>

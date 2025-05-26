@@ -13,9 +13,8 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    color: #fff;
+    color: black;
     background-color: black;
-    background-image: linear-gradient(to right, #000000, #130f40);
 }
 
 .video-container {
