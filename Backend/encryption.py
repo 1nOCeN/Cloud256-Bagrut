@@ -99,7 +99,7 @@ class EncryptionManager:
 
         encrypted_file_path = file_path + ".enc"
         with open(encrypted_file_path, "wb") as f:
-            f.write(nonce + encryptor.tag + encrypted)  # nonce + tag + data
+            f.write(nonce + encryptor.tag + encrypted)
 
         return encrypted_file_path
 

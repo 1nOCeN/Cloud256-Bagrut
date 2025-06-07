@@ -54,6 +54,17 @@
                     </li>
                     {% endfor %}
                 </ul>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flashes">
+      {% for category, message in messages %}
+        <li class="{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
                 {% if show_more %}
                  <button id="show-all-btn" onclick="showAllFiles()">Show All</button>
                 {% endif %}
@@ -96,7 +107,7 @@
         <p>Copyright © 2024 Cloud256 by Inocen. All rights reserved.</p>
     </div>
 
-    <script>
+<script>
     function showAllFiles() {
     const showAllButton = document.getElementById("show-all-btn");
 
@@ -122,7 +133,11 @@
         console.error('Error fetching all files:', error);
     });
 }
+    const socket = io();
 
+socket.on('upload_success', data => {
+  alert(data.msg); // Or better, show a nicer notification
+});
 </script>
 
 

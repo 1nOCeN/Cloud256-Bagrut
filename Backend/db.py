@@ -5,7 +5,6 @@ from mysql.connector import Error
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 
-# Function to connect to MySQL
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
@@ -16,7 +15,7 @@ def get_db_connection():
         return connection
     except Error as e:
         print(f"Error while connecting to MySQL: {e}")
-        return None  # Return None instead of raising an exception
+        return None
 
 def get_user_by_email(email):
     connection = get_db_connection()

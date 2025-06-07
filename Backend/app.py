@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify, session
 from flask_socketio import SocketIO
 from db import token_required
 
@@ -8,9 +8,10 @@ from config import Config
 from encryption import EncryptionManager
 from files import FileManager
 from auth import AuthManager
-from chat import ChatManager
+from ChatManager import ChatManager
 from route import RouteHandlers
-
+from Progress_socket import ProgressSocketServer
+from Notify import notification_manager
 
 class CloudStorageApp:
     """מחלקה ראשית לאפליקציית אחסון הענן"""
@@ -30,6 +31,12 @@ class CloudStorageApp:
         # יצירת SocketIO
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
 
+        self.progress_server = ProgressSocketServer(host="0.0.0.0", port=5555)
+        self.progress_server.start()
+
+        # Attach to Flask app for access inside routes
+        self.app.progress_server = self.progress_server
+
         # יצירת מנהלי המערכת
         self.encryption_manager = EncryptionManager()
         self.file_manager = FileManager(self.config.BASE_UPLOAD_FOLDER, self.encryption_manager)
@@ -39,12 +46,20 @@ class CloudStorageApp:
             self.auth_manager,
             self.file_manager,
             self.chat_manager,
-            self.config
+            self.config,
         )
 
         # רישום נתיבים
         self.register_routes()
         self.register_error_handlers()
+
+    def check_notifications(self):
+        username = session.get('username')
+        if not username:
+            return jsonify({'notifications': []}), 401
+
+        notifications = notification_manager.get_notifications(username)
+        return jsonify({'notifications': notifications})
 
     def register_routes(self):
         """רישום כל הנתיבים של האפליקציה"""
@@ -77,6 +92,10 @@ class CloudStorageApp:
         self.app.add_url_rule("/api/my-files", "api_get_my_files",
                               token_required(self.route_handlers.api_get_my_files), methods=["GET"])
 
+        self.app.add_url_rule("/check_notifications", "check_notifications", self.check_notifications, methods=["GET"])
+
+
+
     def register_error_handlers(self):
         """רישום מטפלי שגיאות"""
 
@@ -104,6 +123,7 @@ class CloudStorageApp:
         self.socketio.run(self.app, host=host, port=port, debug=debug)
 
 
+
 def create_app():
     """Factory function ליצירת האפליקציה"""
     return CloudStorageApp()
@@ -112,4 +132,4 @@ def create_app():
 # הרצת האפליקציה
 if __name__ == "__main__":
     app = create_app()
-    app.run()
+    app.run(host="0.0.0.0", port=5000, debug=True)

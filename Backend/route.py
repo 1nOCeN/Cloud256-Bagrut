@@ -1,5 +1,5 @@
 import os
-from flask import render_template, redirect, url_for, request, jsonify, session
+from flask import render_template, redirect, url_for, request, jsonify, session, current_app, flash
 from db import token_required
 
 
@@ -60,16 +60,14 @@ class RouteHandlers:
         self.auth_manager.logout_user()
         return redirect(url_for("login"))
 
+    from flask import current_app
+
     def upload_file(self):
-        """העלאת קבצים"""
         if request.method == "GET":
             return render_template("upload.html")
 
         if not self.auth_manager.is_logged_in():
             return redirect(url_for("login"))
-
-        # התחלת מעקב התקדמות
-        self.chat_manager.start_progress_tracking()
 
         if "file" not in request.files:
             return "No file part", 400
@@ -78,19 +76,26 @@ class RouteHandlers:
         if not files:
             return "No file selected", 400
 
-        print(f"Received files: {[file.filename for file in files]}")
-
         current_user = self.auth_manager.get_current_user()
         username = current_user['username']
 
-        # בדיקת סוגי קבצים מותרים
+        # Check file extensions
         for file in files:
             if file.filename and not self.config.allowed_file(file.filename):
                 return f"File type not allowed. Allowed types: {', '.join(self.config.ALLOWED_EXTENSIONS)}", 400
 
         try:
+            # Save and encrypt files, get list of saved filenames
             encrypted_file_paths = self.file_manager.save_and_encrypt_files(files, username)
+
+            # Notify user for each file upload complete
+            for path in encrypted_file_paths:
+                filename = os.path.basename(path)
+                current_app.progress_server.notify_upload_complete(username, filename)
+
+            flash("File uploaded and encrypted successfully!", "success")
             return redirect(url_for("main_program"))
+
         except Exception as e:
             return f"Error saving files: {str(e)}", 500
 
@@ -222,3 +227,4 @@ class RouteHandlers:
         """API - קבלת קבצי המשתמש"""
         files, _, _ = self.file_manager.get_user_files(user["username"], show_all=True)
         return {"files": files}
+

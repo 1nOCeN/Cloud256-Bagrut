@@ -2,6 +2,8 @@ import os
 from werkzeug.utils import secure_filename
 from io import BytesIO
 from flask import send_file
+from Progress_socket import ProgressSocketServer
+from Notify import notification_manager
 
 
 class FileManager:
@@ -10,6 +12,8 @@ class FileManager:
     def __init__(self, base_upload_folder, encryption_manager):
         self.base_upload_folder = base_upload_folder
         self.encryption_manager = encryption_manager
+        self.progress_server = ProgressSocketServer(host="0.0.0.0", port=5555)
+        self.progress_server.start()
 
     def get_user_folder(self, username):
         """קבלת תיקיית המשתמש"""
@@ -62,7 +66,10 @@ class FileManager:
                 # מחיקת הקובץ המקורי
                 os.remove(temp_file_path)
 
+
                 print(f"File encrypted and saved as {encrypted_file_path}")
+                notification_manager.add_notification(username, filename)
+
 
             except Exception as e:
                 print(f"Error processing file {filename}: {e}")
